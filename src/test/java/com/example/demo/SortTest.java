@@ -1,8 +1,20 @@
 package com.example.demo;
 
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.api.sync.RedisStringCommands;
+import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
+import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.masterslave.MasterSlave;
+import io.lettuce.core.masterslave.StatefulRedisMasterSlaveConnection;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import redis.clients.jedis.Jedis;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -12,21 +24,39 @@ import static org.junit.Assert.assertTrue;
 
 public class SortTest {
 
-	private static Jedis jedis;
+	private static RedisCommands<String, String> sync;
+	private static StatefulRedisClusterConnection<String, String> connection;
+	private static RedisClusterClient client;
 
 	@BeforeClass
 	public static void setup() {
-//		jedis = new Jedis("52.91.75.7", 10001);
-		jedis = new Jedis("54.81.188.194", 13785);
-		jedis.auth("mypass");
+		RedisClient redisClient = RedisClient.create();
 
-		jedis.flushAll();
+		StatefulRedisMasterSlaveConnection<String, String> connection
+				= MasterSlave.connect(redisClient,
+				new Utf8StringCodec(), RedisURI.create("redis://172.31.21.73:14335"));
+
+//		connection.setReadFrom(ReadFrom.SLAVE);
+
+		sync = connection.sync();
+	}
+
+	@AfterClass
+	public static void tearDown() {
+		connection.close();
+		client.shutdown();
+	}
+
+	private static RedisStringCommands getSync(String uri) {
+		RedisClient ent_client = RedisClient.create(uri);
+		StatefulRedisConnection<String, String> connection = ent_client.connect();
+		return connection.sync();
 	}
 
 
 	private List<String> sort(boolean reverse) {
 
-		Set<String> keySet = jedis.keys("*");
+		Set<String> keySet = Collections.singleton(sync.get("*"));
 		List<String> keySorted = new ArrayList<String>(keySet) ;        //set -> list
 
 		//Sort the list
@@ -46,18 +76,16 @@ public class SortTest {
 
 	private void insertRandom(int num) {
 		Random rand = new Random();
-		jedis.flushAll();
 		IntStream.rangeClosed(1, num).forEach(i -> {
 			int nextInt = rand.nextInt(1000);
-			jedis.set(String.valueOf(nextInt), String.valueOf(nextInt));
+			sync.set(String.valueOf(nextInt), String.valueOf(nextInt));
 		});
 	}
 
 	private void insertList(List<Integer> nums) {
 		Random rand = new Random();
-		jedis.flushAll();
 		nums.forEach(i -> {
-			jedis.set(String.valueOf(i), String.valueOf(i));
+			sync.set(String.valueOf(i), String.valueOf(i));
 		});
 	}
 
