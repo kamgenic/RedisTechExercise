@@ -12,24 +12,24 @@ import static org.junit.Assert.assertTrue;
 
 public class SortTest {
 
-	private static Jedis oss_jedis;
-	private static Jedis ent_jedis;
+	private static Jedis write_node;
+	private static Jedis read_node;
 
 	@BeforeClass
 	public static void setup() {
-		oss_jedis = new Jedis("52.91.75.7", 10001);
-		oss_jedis.auth("mypass");
+		write_node = new Jedis("52.91.75.7", 10001);
+		write_node.auth("mypass");
 
-		ent_jedis = new Jedis("54.81.188.194", 10001);
-		ent_jedis.auth("mypass");
+		read_node = new Jedis("54.81.188.194", 10001);
+		read_node.auth("mypass");
 
-		oss_jedis.flushAll();
+		write_node.flushAll();
 	}
 
 
 	private List<String> sort(boolean reverse) {
 
-		Set<String> keySet = ent_jedis.keys("*");
+		Set<String> keySet = read_node.keys("*");
 		List<String> keySorted = new ArrayList<String>(keySet) ;        //set -> list
 
 		//Sort the list
@@ -43,24 +43,22 @@ public class SortTest {
 			Collections.reverse(keySorted);
 		}
 
-		//keySorted.forEach((key) -> System.out.println("KEY: " + key + " VALUE: " + jedis.get(key)));
 		return keySorted;
 	}
 
 	private void insertRandom(int num) {
 		Random rand = new Random();
-		oss_jedis.flushAll();
+		write_node.flushAll();
 		IntStream.rangeClosed(1, num).forEach(i -> {
 			int nextInt = rand.nextInt(1000);
-			oss_jedis.set(String.valueOf(nextInt), String.valueOf(nextInt));
+			write_node.set(String.valueOf(nextInt), String.valueOf(nextInt));
 		});
 	}
 
 	private void insertList(List<Integer> nums) {
-		Random rand = new Random();
-		oss_jedis.flushAll();
+		write_node.flushAll();
 		nums.forEach(i -> {
-			oss_jedis.set(String.valueOf(i), String.valueOf(i));
+			write_node.set(String.valueOf(i), String.valueOf(i));
 		});
 	}
 
