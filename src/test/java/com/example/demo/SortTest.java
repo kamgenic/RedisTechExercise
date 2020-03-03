@@ -1,6 +1,5 @@
 package com.example.demo;
 
-import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -8,7 +7,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.sync.RedisStringCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.masterslave.MasterSlave;
 import io.lettuce.core.masterslave.StatefulRedisMasterSlaveConnection;
@@ -34,7 +32,7 @@ public class SortTest {
 
 		StatefulRedisMasterSlaveConnection<String, String> connection
 				= MasterSlave.connect(redisClient,
-				new Utf8StringCodec(), RedisURI.create("redis://172.31.21.73:14335"));
+				new Utf8StringCodec(), RedisURI.create("redis://mypass@52.91.75.7:10001"));
 
 //		connection.setReadFrom(ReadFrom.SLAVE);
 
@@ -43,8 +41,8 @@ public class SortTest {
 
 	@AfterClass
 	public static void tearDown() {
-		connection.close();
-		client.shutdown();
+//		connection.close();
+//		client.shutdown();
 	}
 
 	private static RedisStringCommands getSync(String uri) {
@@ -56,8 +54,7 @@ public class SortTest {
 
 	private List<String> sort(boolean reverse) {
 
-		Set<String> keySet = Collections.singleton(sync.get("*"));
-		List<String> keySorted = new ArrayList<String>(keySet) ;        //set -> list
+		List<String> keySorted = sync.keys("*");
 
 		//Sort the list
 		Collections.sort(keySorted, new Comparator<String>() {
@@ -75,6 +72,7 @@ public class SortTest {
 	}
 
 	private void insertRandom(int num) {
+		sync.flushall();
 		Random rand = new Random();
 		IntStream.rangeClosed(1, num).forEach(i -> {
 			int nextInt = rand.nextInt(1000);
@@ -83,6 +81,7 @@ public class SortTest {
 	}
 
 	private void insertList(List<Integer> nums) {
+		sync.flushall();
 		Random rand = new Random();
 		nums.forEach(i -> {
 			sync.set(String.valueOf(i), String.valueOf(i));
@@ -139,7 +138,7 @@ public class SortTest {
 		List<String> sorted = sort(false);
 //INDETERMINISTIC!!		assertEquals(num, sorted.size());
 
-		IntStream.rangeClosed(1, 5).forEach(i -> {
+		IntStream.rangeClosed(1, 3).forEach(i -> {
 			int rand = new Random().nextInt(sorted.size());
 			assertTrue(Integer.valueOf(sorted.get(rand)) < Integer.valueOf(sorted.get(rand+1)));
 		});
