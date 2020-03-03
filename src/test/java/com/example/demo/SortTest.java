@@ -16,7 +16,7 @@ public class SortTest {
 
 	@BeforeClass
 	public static void setup() {
-		jedis = new Jedis("34.229.147.134", 10001);
+		jedis = new Jedis("localhost", 10001);
 	}
 
 	private List<String> sort(boolean reverse) {
