@@ -16,8 +16,13 @@ public class SortTest {
 
 	@BeforeClass
 	public static void setup() {
-		jedis = new Jedis("localhost", 10001);
+//		jedis = new Jedis("52.91.75.7", 10001);
+		jedis = new Jedis("54.81.188.194", 13785);
+		jedis.auth("mypass");
+
+		jedis.flushAll();
 	}
+
 
 	private List<String> sort(boolean reverse) {
 
@@ -100,14 +105,13 @@ public class SortTest {
 
 	@Test
 	public void sort_lotta_keys() {
-		int num = 1000;
+		int num = 10;
 		insertRandom(num);
 
 		List<String> sorted = sort(false);
 //INDETERMINISTIC!!		assertEquals(num, sorted.size());
 
-
-		IntStream.rangeClosed(1, 10).forEach(i -> {
+		IntStream.rangeClosed(1, 5).forEach(i -> {
 			int rand = new Random().nextInt(sorted.size());
 			assertTrue(Integer.valueOf(sorted.get(rand)) < Integer.valueOf(sorted.get(rand+1)));
 		});
