@@ -12,21 +12,24 @@ import static org.junit.Assert.assertTrue;
 
 public class SortTest {
 
-	private static Jedis jedis;
+	private static Jedis oss_jedis;
+	private static Jedis ent_jedis;
 
 	@BeforeClass
 	public static void setup() {
-//		jedis = new Jedis("52.91.75.7", 10001);
-		jedis = new Jedis("54.81.188.194", 13785);
-		jedis.auth("mypass");
+		oss_jedis = new Jedis("52.91.75.7", 10001);
+		oss_jedis.auth("mypass");
 
-		jedis.flushAll();
+		ent_jedis = new Jedis("54.81.188.194", 10001);
+		ent_jedis.auth("mypass");
+
+		oss_jedis.flushAll();
 	}
 
 
 	private List<String> sort(boolean reverse) {
 
-		Set<String> keySet = jedis.keys("*");
+		Set<String> keySet = ent_jedis.keys("*");
 		List<String> keySorted = new ArrayList<String>(keySet) ;        //set -> list
 
 		//Sort the list
@@ -46,18 +49,18 @@ public class SortTest {
 
 	private void insertRandom(int num) {
 		Random rand = new Random();
-		jedis.flushAll();
+		oss_jedis.flushAll();
 		IntStream.rangeClosed(1, num).forEach(i -> {
 			int nextInt = rand.nextInt(1000);
-			jedis.set(String.valueOf(nextInt), String.valueOf(nextInt));
+			oss_jedis.set(String.valueOf(nextInt), String.valueOf(nextInt));
 		});
 	}
 
 	private void insertList(List<Integer> nums) {
 		Random rand = new Random();
-		jedis.flushAll();
+		oss_jedis.flushAll();
 		nums.forEach(i -> {
-			jedis.set(String.valueOf(i), String.valueOf(i));
+			oss_jedis.set(String.valueOf(i), String.valueOf(i));
 		});
 	}
 
@@ -111,7 +114,7 @@ public class SortTest {
 		List<String> sorted = sort(false);
 //INDETERMINISTIC!!		assertEquals(num, sorted.size());
 
-		IntStream.rangeClosed(1, 5).forEach(i -> {
+		IntStream.rangeClosed(1, 3).forEach(i -> {
 			int rand = new Random().nextInt(sorted.size());
 			assertTrue(Integer.valueOf(sorted.get(rand)) < Integer.valueOf(sorted.get(rand+1)));
 		});
